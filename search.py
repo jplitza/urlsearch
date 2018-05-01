@@ -2,23 +2,21 @@
 
 import argparse
 import pickle
-from urllib.parse import unquote_plus
 
 
 def search(index, terms):
     terms = [term.lower() for term in terms]
-    index = {id: (parent, name) for id, parent, name in index}
+    index = {x[0]: x[1:] for x in index}
 
     def compose_url(id, rem):
         if id == 0:
             return rem
         else:
-            parent, name = index[id]
-            return compose_url(parent, '/'.join((name, rem)))
+            it = index[id]
+            return compose_url(it[0], '/'.join((it[1], rem)))
 
     for id, item in index.items():
-        parent, name = item
-        realname = unquote_plus(name)
+        parent, name, realname = item
         if all(term in realname.lower() for term in terms):
             yield (realname, compose_url(parent, name))
 

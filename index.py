@@ -136,5 +136,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     links = crawl(args.URLs)
-    pickle.dump(list(links.flatten()), args.index)
+    pickle.dump([x + (unquote(x[2]),) for x in links.flatten()], args.index)
     args.index.close()
