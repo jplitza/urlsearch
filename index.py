@@ -114,8 +114,14 @@ def crawl(roots, maxlength=51200, timeout=10):
                             queue.append(link)
 
             parser.reset()
-        except requests.exceptions.RequestException:
-            logging.exception("Exception while fetching URL %s", url)
+        except requests.exceptions.RequestException as e:
+            logging.info(
+                "Exception while fetching URL %s: %s.%s: %s",
+                url,
+                e.__class__.__module__,
+                e.__class__.__qualname__,
+                str(e),
+            )
 
     return found
 
