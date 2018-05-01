@@ -60,7 +60,7 @@ def normalize_url(url):
     ))
 
 
-def crawl(roots, maxlength=51200):
+def crawl(roots, maxlength=51200, timeout=1):
     roots = tuple(map(normalize_url, roots))
 
     found = FileTree()
@@ -74,45 +74,48 @@ def crawl(roots, maxlength=51200):
 
     while len(queue) > 0:
         url = queue.pop(0)
-        with session.get(url) as req:
-            if not req.ok:
-                logger.debug(
-                    'HEAD request for %s returned HTTP status code %d',
-                    url,
-                    req.status_code,
-                )
-                continue
+        try:
+            with session.get(url, timeout=timeout) as req:
+                if not req.ok:
+                    logger.debug(
+                        'HEAD request for %s returned HTTP status code %d',
+                        url,
+                        req.status_code,
+                    )
+                    continue
 
-            if req.headers['Content-Type'] != 'text/html' and not \
-                    req.headers['Content-Type'].startswith('text/html;'):
-                logger.debug(
-                    'URL %s is of type %s, not text/html',
-                    url,
-                    req.headers['Content-Type'],
-                )
-                continue
+                if req.headers['Content-Type'] != 'text/html' and not \
+                        req.headers['Content-Type'].startswith('text/html;'):
+                    logger.debug(
+                        'URL %s is of type %s, not text/html',
+                        url,
+                        req.headers['Content-Type'],
+                    )
+                    continue
 
-            if int(req.headers.get('Content-Length', 0)) > maxlength:
-                logger.debug(
-                    'URL %s is longer than %d bytes',
-                    url,
-                    maxlength,
-                )
-                continue
+                if int(req.headers.get('Content-Length', 0)) > maxlength:
+                    logger.debug(
+                        'URL %s is longer than %d bytes',
+                        url,
+                        maxlength,
+                    )
+                    continue
 
-            parser.feed(req.text)
-        parser.close()
+                parser.feed(req.text)
+            parser.close()
 
-        for link in parser.links:
-            link = normalize_url(urljoin(url, link))
-            if link.startswith(roots):
-                path = link.rstrip('/').split('/')
-                if not found.has(path):
-                    found.add(path)
-                    if link.endswith('/'):
-                        queue.append(link)
+            for link in parser.links:
+                link = normalize_url(urljoin(url, link))
+                if link.startswith(roots):
+                    path = link.rstrip('/').split('/')
+                    if not found.has(path):
+                        found.add(path)
+                        if link.endswith('/'):
+                            queue.append(link)
 
-        parser.reset()
+            parser.reset()
+        except requests.exceptions.RequestException:
+            logging.exception("Exception while fetching URL %s", url)
 
     return found
 
