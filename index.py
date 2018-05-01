@@ -60,7 +60,7 @@ def normalize_url(url):
     ))
 
 
-def crawl(roots, maxlength=51200, timeout=1):
+def crawl(roots, maxlength=51200, timeout=10):
     roots = tuple(map(normalize_url, roots))
 
     found = FileTree()
