@@ -54,7 +54,7 @@ def normalize_url(url):
     return urlunsplit((
         split.scheme,
         split.netloc.lower(),
-        "/".join(quote(unquote(comp)) for comp in split.path.split("/")),
+        "/".join(quote(comp, '%') for comp in split.path.split("/")),
         "",
         "",
     ))
